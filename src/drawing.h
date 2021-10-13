@@ -19,6 +19,8 @@ typedef struct
 void draw_line (GromitData *data, GdkDevice *dev, gint x1, gint y1, gint x2, gint y2);
 void draw_arrow (GromitData *data, GdkDevice *dev, gint x1, gint y1, gint width, gfloat direction);
 void draw_arrow_when_applicable(GdkDevice *device, GromitDeviceData *devdata, GromitData *data, GromitArrowPosition position);
+void draw_straight_line_during_motion (GdkEventMotion *ev, GromitDeviceData *devdata, GromitData *data);
+void cleanup_context(GromitPaintContext *context);
 gboolean coord_list_get_arrow_param (GromitData *data,
 					    GdkDevice  					*dev,
 					    gint        				search_radius,
@@ -26,7 +28,6 @@ gboolean coord_list_get_arrow_param (GromitData *data,
 					    gint       					*ret_width,
 					    gfloat     					*ret_direction);
 void coord_list_prepend (GromitData *data, GdkDevice* dev, gint x, gint y, gint width);
-void cleanup_context(GromitPaintContext *context);
 void coord_list_free (GromitData *data, GdkDevice* dev);
 
 

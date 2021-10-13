@@ -267,6 +267,12 @@ gboolean on_buttonpress (GtkWidget *win,
   devdata->lasty = ev->y;
   devdata->motion_time = ev->time;
 
+  if(devdata->cur_context->type == GROMIT_LINE)
+    {
+      data->motionbuffer = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, data->width, data->height);
+      copy_surface (data->motionbuffer, data->backbuffer);
+    }
+
   snap_undo_state (data);
 
   gdk_event_get_axis ((GdkEvent *) ev, GDK_AXIS_PRESSURE, &pressure);
@@ -359,13 +365,17 @@ gboolean on_motion (GtkWidget *win,
 			devdata->cur_context->minwidth);
 
       if(data->maxwidth > devdata->cur_context->maxwidth)
-	data->maxwidth = devdata->cur_context->maxwidth;
+        data->maxwidth = devdata->cur_context->maxwidth;
 
       if(devdata->motion_time > 0)
-	{
-	  draw_line (data, ev->device, devdata->lastx, devdata->lasty, ev->x, ev->y);
-	  coord_list_prepend (data, ev->device, ev->x, ev->y, data->maxwidth);
-	}
+  	    {
+          if(devdata->cur_context->type == GROMIT_LINE)
+            draw_straight_line_during_motion (ev, devdata, data);
+          else
+        	  draw_line (data, ev->device, devdata->lastx, devdata->lasty, ev->x, ev->y);
+
+	        coord_list_prepend (data, ev->device, ev->x, ev->y, data->maxwidth);
+	      }
     }
 
   devdata->lastx = ev->x;

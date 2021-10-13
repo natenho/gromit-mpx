@@ -57,7 +57,8 @@ void draw_arrow_when_applicable(GdkDevice *device, GromitDeviceData *devdata, Gr
   switch (position)
   {
   case GROMIT_ARROW_AT_START:
-    if(devdata->cur_context->start_arrow_painted)
+    if(devdata->cur_context->start_arrow_painted &&
+      devdata->cur_context->type == GROMIT_PEN)
       return;
 
     arrow_point = g_list_last(devdata->coordlist)->data;
@@ -234,8 +235,8 @@ gboolean coord_list_get_arrow_param (GromitData *data,
                      (cur_point->y - y0) * (cur_point->y - y0);
               width = cur_point->width * devdata->cur_context->arrowsize;
               if (width * 2 <= dist &&
-                  (!valid_point || valid_point->width < cur_point->width))
-                valid_point = cur_point;
+                  (!valid_point || valid_point->width <= cur_point->width))
+                  valid_point = cur_point;
             }
         }
 
@@ -251,3 +252,24 @@ gboolean coord_list_get_arrow_param (GromitData *data,
   return success;
 }
 
+void draw_straight_line_during_motion (GdkEventMotion *ev, GromitDeviceData *devdata, GromitData *data)
+{
+  GromitStrokeCoordinate *start_point = g_list_last(devdata->coordlist)->data;
+
+  gint x0 = start_point->x;
+  gint y0 = start_point->y;
+  gint w0 = start_point->width;
+
+  //Restore initial surface (vefore start drawing)
+  copy_surface(data->backbuffer, data->motionbuffer);
+  GdkRectangle rect = {0, 0, data->width, data->height};
+  gdk_window_invalidate_rect(gtk_widget_get_window(data->win), &rect, 0);
+  data->modified = 1;
+
+  //Recreate the line every motion
+  draw_line (data, ev->device, x0, y0, ev->x, ev->y);
+
+  //Straight lines only needs 2 coord points
+  coord_list_free(data, ev->device);
+  coord_list_prepend (data, ev->device, x0, y0, w0);
+}

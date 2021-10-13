@@ -63,7 +63,8 @@ typedef enum
 {
   GROMIT_PEN,
   GROMIT_ERASER,
-  GROMIT_RECOLOR
+  GROMIT_RECOLOR,
+  GROMIT_LINE
 } GromitPaintType;
 
 typedef enum
@@ -153,6 +154,8 @@ typedef struct
   gint            undo_head, undo_depth, redo_depth;
 
   gboolean show_intro_on_startup;
+
+  cairo_surface_t *motionbuffer;
 
 } GromitData;
 

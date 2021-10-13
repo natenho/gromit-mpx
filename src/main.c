@@ -55,7 +55,7 @@ GromitPaintContext *paint_context_new (GromitData *data,
   context->minwidth = minwidth;
   context->maxwidth = maxwidth;
   context->paint_color = paint_color;
-
+  context->start_arrow_painted = FALSE;
 
   context->paint_ctx = cairo_create (data->backbuffer);
 
@@ -71,7 +71,7 @@ GromitPaintContext *paint_context_new (GromitData *data,
   else
     if (type == GROMIT_RECOLOR)
       cairo_set_operator(context->paint_ctx, CAIRO_OPERATOR_ATOP);
-    else /* GROMIT_PEN */
+    else
       cairo_set_operator(context->paint_ctx, CAIRO_OPERATOR_OVER);
 
   return context;
@@ -90,6 +90,8 @@ void paint_context_print (gchar *name,
       g_printerr ("Eraser,  "); break;
     case GROMIT_RECOLOR:
       g_printerr ("Recolor, "); break;
+    case GROMIT_LINE:
+      g_printerr ("Line, "); break;
     default:
       g_printerr ("UNKNOWN, "); break;
   }
