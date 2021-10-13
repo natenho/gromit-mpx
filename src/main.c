@@ -91,7 +91,9 @@ void paint_context_print (gchar *name,
     case GROMIT_RECOLOR:
       g_printerr ("Recolor, "); break;
     case GROMIT_LINE:
-      g_printerr ("Line, "); break;
+      g_printerr ("Line,    "); break;
+    case GROMIT_ELLIPSE:
+      g_printerr ("Ellipse, "); break;
     default:
       g_printerr ("UNKNOWN, "); break;
   }

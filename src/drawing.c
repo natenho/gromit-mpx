@@ -78,6 +78,63 @@ void draw_arrow_when_applicable(GdkDevice *device, GromitDeviceData *devdata, Gr
   }
 }
 
+void draw_ellipse(GromitData *data,
+		GdkDevice *dev,
+		gint x1, gint y1,
+		gint x2, gint y2)
+{
+  GdkRectangle rect;
+  GromitDeviceData *devdata = g_hash_table_lookup(data->devdatatable, dev);
+
+  rect.x = MIN (x1,x2) - data->maxwidth / 2;
+  rect.y = MIN (y1,y2) - data->maxwidth / 2;
+  rect.width = ABS (x1-x2) + data->maxwidth;
+  rect.height = ABS (y1-y2) + data->maxwidth;
+
+  if(data->debug)
+    g_printerr("DEBUG: draw ellipse coord (%d,%d) %dx%d\n", rect.x, rect.y, rect.width, rect.height);
+
+  if (devdata->cur_context->paint_ctx)
+    {
+      cairo_save(devdata->cur_context->paint_ctx);
+      cairo_translate(devdata->cur_context->paint_ctx, rect.x + (rect.width / 2.0), rect.y + (rect.height / 2.0));
+      cairo_scale(devdata->cur_context->paint_ctx, rect.width / 2.0, rect.height / 2.0);
+      cairo_arc(devdata->cur_context->paint_ctx, 0.0, 0.0, 1.0, 0.0, M_PI * 2);
+      cairo_restore(devdata->cur_context->paint_ctx);
+
+      cairo_set_line_width(devdata->cur_context->paint_ctx, data->maxwidth);
+      cairo_set_line_cap(devdata->cur_context->paint_ctx, CAIRO_LINE_CAP_ROUND);
+      cairo_set_line_join(devdata->cur_context->paint_ctx, CAIRO_LINE_JOIN_ROUND);
+
+      cairo_stroke(devdata->cur_context->paint_ctx);
+
+      data->modified = 1;
+
+      gdk_window_invalidate_rect(gtk_widget_get_window(data->win), &rect, 0);
+    }
+
+  data->painted = 1;
+}
+
+void draw_ellipse_during_motion (GdkEventMotion *ev, GromitDeviceData *devdata, GromitData *data)
+{
+  GromitStrokeCoordinate *start_point = g_list_last(devdata->coordlist)->data;
+
+  gint x0 = start_point->x;
+  gint y0 = start_point->y;
+  gint w0 = start_point->width;
+
+  copy_surface(data->backbuffer, data->motionbuffer);
+  GdkRectangle rect = {0, 0, data->width, data->height};
+  gdk_window_invalidate_rect(gtk_widget_get_window(data->win), &rect, 0);
+  data->modified = 1;
+
+  draw_ellipse (data, ev->device, x0, y0, ev->x, ev->y);
+
+  coord_list_free(data, ev->device);
+  coord_list_prepend (data, ev->device, x0, y0, w0);
+}
+
 void draw_arrow (GromitData *data,
 		 GdkDevice *dev,
 		 gint x1, gint y1,
@@ -260,7 +317,7 @@ void draw_straight_line_during_motion (GdkEventMotion *ev, GromitDeviceData *dev
   gint y0 = start_point->y;
   gint w0 = start_point->width;
 
-  //Restore initial surface (vefore start drawing)
+  //Restore initial surface (before start drawing)
   copy_surface(data->backbuffer, data->motionbuffer);
   GdkRectangle rect = {0, 0, data->width, data->height};
   gdk_window_invalidate_rect(gtk_widget_get_window(data->win), &rect, 0);

@@ -267,11 +267,16 @@ gboolean on_buttonpress (GtkWidget *win,
   devdata->lasty = ev->y;
   devdata->motion_time = ev->time;
 
-  if(devdata->cur_context->type == GROMIT_LINE)
-    {
-      data->motionbuffer = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, data->width, data->height);
-      copy_surface (data->motionbuffer, data->backbuffer);
-    }
+  switch (devdata->cur_context->type)
+  {
+  case GROMIT_LINE:
+  case GROMIT_ELLIPSE:
+    data->motionbuffer = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, data->width, data->height);
+    copy_surface (data->motionbuffer, data->backbuffer);
+    break;
+  default:
+    break;
+  }
 
   snap_undo_state (data);
 
@@ -369,10 +374,20 @@ gboolean on_motion (GtkWidget *win,
 
       if(devdata->motion_time > 0)
   	    {
-          if(devdata->cur_context->type == GROMIT_LINE)
+          switch (devdata->cur_context->type)
+          {
+          case GROMIT_ELLIPSE:
+            draw_ellipse_during_motion (ev, devdata, data);
+            break;
+
+          case GROMIT_LINE:
             draw_straight_line_during_motion (ev, devdata, data);
-          else
-        	  draw_line (data, ev->device, devdata->lastx, devdata->lasty, ev->x, ev->y);
+            break;
+
+          default:
+            draw_line (data, ev->device, devdata->lastx, devdata->lasty, ev->x, ev->y);
+            break;
+          }
 
 	        coord_list_prepend (data, ev->device, ev->x, ev->y, data->maxwidth);
 	      }
