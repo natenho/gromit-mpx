@@ -85,17 +85,19 @@ void paint_context_print (gchar *name,
   switch (context->type)
   {
     case GROMIT_PEN:
-      g_printerr ("Pen,     "); break;
+      g_printerr ("Pen,       "); break;
     case GROMIT_ERASER:
-      g_printerr ("Eraser,  "); break;
+      g_printerr ("Eraser,    "); break;
     case GROMIT_RECOLOR:
-      g_printerr ("Recolor, "); break;
+      g_printerr ("Recolor,   "); break;
     case GROMIT_LINE:
-      g_printerr ("Line,    "); break;
+      g_printerr ("Line,      "); break;
     case GROMIT_ELLIPSE:
-      g_printerr ("Ellipse, "); break;
+      g_printerr ("Ellipse,   "); break;
+    case GROMIT_RECTANGLE:
+      g_printerr ("Rectangle, "); break;
     default:
-      g_printerr ("UNKNOWN, "); break;
+      g_printerr ("UNKNOWN,   "); break;
   }
 
   g_printerr ("width: %u, ", context->width);

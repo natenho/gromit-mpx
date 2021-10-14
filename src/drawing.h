@@ -21,6 +21,8 @@ void draw_arrow (GromitData *data, GdkDevice *dev, gint x1, gint y1, gint width,
 void draw_arrow_when_applicable(GdkDevice *device, GromitDeviceData *devdata, GromitData *data, GromitArrowPosition position);
 void draw_ellipse(GromitData *data, GdkDevice *dev, gint x1, gint y1, gint x2, gint y2);
 void draw_ellipse_during_motion (GdkEventMotion *ev, GromitDeviceData *devdata, GromitData *data);
+void draw_rectangle(GromitData *data, GdkDevice *dev, gint x1, gint y1, gint x2, gint y2);
+void draw_rectangle_during_motion (GdkEventMotion *ev, GromitDeviceData *devdata, GromitData *data);
 void draw_straight_line_during_motion (GdkEventMotion *ev, GromitDeviceData *devdata, GromitData *data);
 void cleanup_context(GromitPaintContext *context);
 gboolean coord_list_get_arrow_param (GromitData *data,

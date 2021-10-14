@@ -192,11 +192,12 @@ gboolean parse_config (GromitData *data)
   scanner->config->numbers_2_int = 1;
   scanner->config->int_2_float = 1;
 
-  g_scanner_scope_add_symbol (scanner, 0, "PEN",    (gpointer) GROMIT_PEN);
-  g_scanner_scope_add_symbol (scanner, 0, "ERASER", (gpointer) GROMIT_ERASER);
-  g_scanner_scope_add_symbol (scanner, 0, "RECOLOR",(gpointer) GROMIT_RECOLOR);
-  g_scanner_scope_add_symbol (scanner, 0, "LINE",   (gpointer) GROMIT_LINE);
-  g_scanner_scope_add_symbol (scanner, 0, "ELLIPSE",(gpointer) GROMIT_ELLIPSE);
+  g_scanner_scope_add_symbol (scanner, 0, "PEN",      (gpointer) GROMIT_PEN);
+  g_scanner_scope_add_symbol (scanner, 0, "ERASER",   (gpointer) GROMIT_ERASER);
+  g_scanner_scope_add_symbol (scanner, 0, "RECOLOR",  (gpointer) GROMIT_RECOLOR);
+  g_scanner_scope_add_symbol (scanner, 0, "LINE",     (gpointer) GROMIT_LINE);
+  g_scanner_scope_add_symbol (scanner, 0, "ELLIPSE",  (gpointer) GROMIT_ELLIPSE);
+  g_scanner_scope_add_symbol (scanner, 0, "RECTANGLE",(gpointer) GROMIT_RECTANGLE);
   g_scanner_scope_add_symbol (scanner, 0, "HOTKEY",            HOTKEY_SYMBOL_VALUE);
   g_scanner_scope_add_symbol (scanner, 0, "UNDOKEY",           UNDOKEY_SYMBOL_VALUE);
 

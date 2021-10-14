@@ -65,7 +65,8 @@ typedef enum
   GROMIT_ERASER,
   GROMIT_RECOLOR,
   GROMIT_LINE,
-  GROMIT_ELLIPSE
+  GROMIT_ELLIPSE,
+  GROMIT_RECTANGLE
 } GromitPaintType;
 
 typedef enum
