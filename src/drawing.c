@@ -116,25 +116,6 @@ void draw_ellipse(GromitData *data,
   data->painted = 1;
 }
 
-void draw_ellipse_during_motion (GdkEventMotion *ev, GromitDeviceData *devdata, GromitData *data)
-{
-  GromitStrokeCoordinate *start_point = g_list_last(devdata->coordlist)->data;
-
-  gint x0 = start_point->x;
-  gint y0 = start_point->y;
-  gint w0 = start_point->width;
-
-  copy_surface(data->backbuffer, data->motionbuffer);
-  GdkRectangle rect = {0, 0, data->width, data->height};
-  gdk_window_invalidate_rect(gtk_widget_get_window(data->win), &rect, 0);
-  data->modified = 1;
-
-  draw_ellipse (data, ev->device, x0, y0, ev->x, ev->y);
-
-  coord_list_free(data, ev->device);
-  coord_list_prepend (data, ev->device, x0, y0, w0);
-}
-
 void draw_rectangle(GromitData *data,
 		GdkDevice *dev,
 		gint x1, gint y1,
@@ -167,25 +148,6 @@ void draw_rectangle(GromitData *data,
     }
 
   data->painted = 1;
-}
-
-void draw_rectangle_during_motion (GdkEventMotion *ev, GromitDeviceData *devdata, GromitData *data)
-{
-  GromitStrokeCoordinate *start_point = g_list_last(devdata->coordlist)->data;
-
-  gint x0 = start_point->x;
-  gint y0 = start_point->y;
-  gint w0 = start_point->width;
-
-  copy_surface(data->backbuffer, data->motionbuffer);
-  GdkRectangle rect = {0, 0, data->width, data->height};
-  gdk_window_invalidate_rect(gtk_widget_get_window(data->win), &rect, 0);
-  data->modified = 1;
-
-  draw_rectangle (data, ev->device, x0, y0, ev->x, ev->y);
-
-  coord_list_free(data, ev->device);
-  coord_list_prepend (data, ev->device, x0, y0, w0);
 }
 
 void draw_arrow (GromitData *data,
@@ -296,6 +258,26 @@ void coord_list_free (GromitData *data,
   devdata->coordlist = NULL;
 }
 
+void draw_shape_during_motion (
+  GdkEventMotion *ev,
+  GromitDeviceData *devdata,
+  GromitData *data,
+  void (*draw_shape) (GromitData*, GdkDevice*, gint, gint, gint, gint))
+{
+  GromitStrokeCoordinate start_point;
+  memcpy(&start_point, g_list_last(devdata->coordlist)->data, sizeof(GromitStrokeCoordinate));
+
+  copy_surface (data->backbuffer, data->motionbuffer);
+  GdkRectangle rect = {0, 0, data->width, data->height};
+  gdk_window_invalidate_rect (gtk_widget_get_window (data->win), &rect, 0);
+  data->modified = 1;
+
+  draw_shape (data, ev->device, start_point.x, start_point.y, ev->x, ev->y);
+
+  coord_list_free (data, ev->device);
+  coord_list_prepend (data, ev->device, start_point.x, start_point.y, start_point.width);
+}
+
 void cleanup_context(GromitPaintContext *context)
 {
   context->start_arrow_painted = FALSE;
@@ -362,24 +344,3 @@ gboolean coord_list_get_arrow_param (GromitData *data,
   return success;
 }
 
-void draw_straight_line_during_motion (GdkEventMotion *ev, GromitDeviceData *devdata, GromitData *data)
-{
-  GromitStrokeCoordinate *start_point = g_list_last(devdata->coordlist)->data;
-
-  gint x0 = start_point->x;
-  gint y0 = start_point->y;
-  gint w0 = start_point->width;
-
-  //Restore initial surface (before start drawing)
-  copy_surface(data->backbuffer, data->motionbuffer);
-  GdkRectangle rect = {0, 0, data->width, data->height};
-  gdk_window_invalidate_rect(gtk_widget_get_window(data->win), &rect, 0);
-  data->modified = 1;
-
-  //Recreate the line every motion
-  draw_line (data, ev->device, x0, y0, ev->x, ev->y);
-
-  //Straight lines only needs 2 coord points
-  coord_list_free(data, ev->device);
-  coord_list_prepend (data, ev->device, x0, y0, w0);
-}

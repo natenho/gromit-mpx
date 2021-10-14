@@ -112,13 +112,6 @@ static gchar* parse_name (GScanner *scanner)
 
 static GromitArrowPosition parse_arrowposition (gchar *arroposition_str)
 {
-  GTokenType token;
-  gchar *name;
-  guint len = 0;
-
-  len = strlen (arroposition_str);
-  name = g_strndup (arroposition_str, len);
-
   if (strcasecmp(arroposition_str, "none") == 0)
     return GROMIT_ARROW_AT_NONE;
 
@@ -144,7 +137,7 @@ gboolean parse_config (GromitData *data)
   gchar *filename;
   int file;
 
-  gchar *name, *copy, *arrowposition_str;
+  gchar *name, *copy;
 
   GromitPaintType type;
   GdkRGBA *fg_color=NULL;

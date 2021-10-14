@@ -378,15 +378,15 @@ gboolean on_motion (GtkWidget *win,
           switch (devdata->cur_context->type)
           {
           case GROMIT_ELLIPSE:
-            draw_ellipse_during_motion (ev, devdata, data);
+            draw_shape_during_motion (ev, devdata, data, draw_ellipse);
             break;
 
           case GROMIT_RECTANGLE:
-            draw_rectangle_during_motion (ev, devdata, data);
+            draw_shape_during_motion (ev, devdata, data, draw_rectangle);
             break;
 
           case GROMIT_LINE:
-            draw_straight_line_during_motion (ev, devdata, data);
+            draw_shape_during_motion (ev, devdata, data, draw_line);
             break;
 
           default:
