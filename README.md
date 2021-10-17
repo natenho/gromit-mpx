@@ -182,7 +182,11 @@ a line. Specify `arrowposition` with one of possible values (`start`, `end`, `bo
 
 An `ELLIPSE` is a tool that can be used to create ellipses. It leverages the same settings as `PEN` (except arrow settings).
 
-    "Ellipse" = ELLIPSE (size=7 color="blue");
+    "blue Ellipse" = ELLIPSE (size=7 color="blue");
+
+In the same way, a `RECTANGLE` can also be used as a tool:
+
+    "yellow Rectangle" = RECTANGLE (size=3 color="yellow");
 
 An `ERASER` is a tool that erases the drawings on screen.
 The color parameter is not important.
