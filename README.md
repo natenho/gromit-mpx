@@ -180,6 +180,10 @@ a line. Specify `arrowposition` with one of possible values (`start`, `end`, `bo
     "blue Pen" = "blue Arrow" (arrowsize=1 arrowposition="both");
     "blue Pen" = "blue Arrow" (arrowsize=1 arrowposition="none");
 
+An `ELLIPSE` is a tool that can be used to create ellipses. It leverages the same settings as `PEN` (except arrow settings).
+
+    "Ellipse" = ELLIPSE (size=7 color="blue");
+
 An `ERASER` is a tool that erases the drawings on screen.
 The color parameter is not important.
 
