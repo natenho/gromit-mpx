@@ -17,7 +17,7 @@
 
 #include "input.h"
 
-void grab_key(GdkDisplay *display, GdkWindow *window, guint keycode, int kbd_dev_id);
+void grab_hotkey(GdkDisplay *display, GdkWindow *window, guint keycode, int kbd_dev_id);
 
 static gboolean get_are_all_grabbed(GromitData *data)
 {
@@ -235,12 +235,9 @@ void setup_input_devices (GromitData *data)
 	  /* get attached keyboard and grab the hotkey */
 	  if (!data->hot_keycode && !data->undo_keycode)
 	    {
-	      g_printerr("ERROR: Grabbing keys from attached keyboard of '%s' failed, hotkey or undo key not defined.\n",
+	      g_printerr("WARNING: Grabbing keys from attached keyboard of '%s' failed, hotkey or undo key not defined.\n",
 			 gdk_device_get_name(device));
-	      g_free(devdata);
-	      continue;
 	    }
-
 
 	  if (GDK_IS_X11_DISPLAY(data->display)) {
 	      gint dev_id = gdk_x11_device_get_id(device);
@@ -263,9 +260,9 @@ void setup_input_devices (GromitData *data)
 
 		      gdk_x11_display_error_trap_push(data->display);
 
-					grab_key(data->display, data->root, data->hot_keycode, kbd_dev_id);
-					grab_key(data->display, data->root, data->undo_keycode, kbd_dev_id);
-					grab_key(data->display, data->root, find_keycode(data->display, "Tab"), kbd_dev_id);
+					grab_hotkey(data->display, data->root, data->hot_keycode, kbd_dev_id);
+					grab_hotkey(data->display, data->root, data->undo_keycode, kbd_dev_id);
+					grab_hotkey(data->display, data->root, find_keycode(data->display, "Tab"), kbd_dev_id);
 
 		      XSync(GDK_DISPLAY_XDISPLAY(data->display), FALSE);
 
@@ -550,7 +547,7 @@ gint snoop_key_press(GtkWidget   *grab_widget,
   return FALSE;
 }
 
-void grab_key(GdkDisplay *display, GdkWindow *window, guint keycode, int kbd_dev_id)
+void grab_hotkey(GdkDisplay *display, GdkWindow *window, guint keycode, int kbd_dev_id)
 {
 	if (!keycode)
 		return;
