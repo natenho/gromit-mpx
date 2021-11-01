@@ -33,8 +33,6 @@
 #include "paint_cursor.xpm"
 #include "erase_cursor.xpm"
 
-
-
 GromitPaintContext *paint_context_new (GromitData *data,
 				       GromitPaintType type,
 				       GdkRGBA *paint_color,
@@ -255,6 +253,15 @@ void select_tool (GromitData *data,
   /* get the data for this device */
   GromitDeviceData *devdata = g_hash_table_lookup(data->devdatatable, device);
 
+  if (state == devdata->state &&
+      data->extra_modifier_state == devdata->extra_modifier_state &&
+      devdata->lastslave == slave_device)
+  {
+    if (data->debug)
+      g_printerr("DEBUG: select_tool skipped (same context)\n");
+    return;
+  }
+
   if (device)
     {
       slave_len = strlen (gdk_device_get_name(slave_device));
@@ -344,6 +351,47 @@ void select_tool (GromitData *data,
         }
       while (i < req_buttons);
 
+      // Extra modifier
+      if (!req_modifier && data->extra_modifier_state)
+      {
+        buttons = 0;
+        modifier = 8;
+        slave_name[slave_len + 1] = buttons + 64;
+        slave_name[slave_len + 2] = modifier + 48;
+        name[len + 1] = buttons + 64;
+        name[len + 2] = modifier + 48;
+        default_name[default_len + 1] = buttons + 64;
+        default_name[default_len + 2] = modifier + 48;
+
+        if (data->debug)
+          g_printerr("DEBUG: extra modifier select_tool looking up context for '%s' attached to '%s'\n", slave_name, name);
+
+        context = g_hash_table_lookup(data->tool_config, slave_name);
+        if (context)
+        {
+          if (data->debug)
+            g_printerr("DEBUG: extra modifier select_tool set context for '%s'\n", slave_name);
+          devdata->cur_context = context;
+          success = 1;
+        }
+        else /* try master name */
+            if ((context = g_hash_table_lookup(data->tool_config, name)))
+        {
+          if (data->debug)
+            g_printerr("DEBUG: extra modifier select_tool set context for '%s'\n", name);
+          devdata->cur_context = context;
+          success = 1;
+        }
+        else /* try default_name */
+            if ((context = g_hash_table_lookup(data->tool_config, default_name)))
+        {
+          if (data->debug)
+            g_printerr("DEBUG: extra modifier select_tool set default context '%s' for '%s'\n", default_name, name);
+          devdata->cur_context = context;
+          success = 1;
+        }
+      }
+
       g_free (name);
       g_free (default_name);
 
@@ -385,6 +433,7 @@ void select_tool (GromitData *data,
 
   devdata->state = state;
   devdata->lastslave = slave_device;
+  devdata->extra_modifier_state = data->extra_modifier_state;
 }
 
 
@@ -496,6 +545,13 @@ void main_do_event (GdkEventAny *event,
 		    GromitData  *data)
 {
   guint keycode = ((GdkEventKey *) event)->hardware_keycode;
+
+  if(event->type == GDK_KEY_PRESS && keycode == data->extra_modifier_keycode)
+    data->extra_modifier_state = TRUE;
+
+  if(event->type == GDK_KEY_RELEASE && keycode == data->extra_modifier_keycode)
+    data->extra_modifier_state = FALSE;
+
   if ((event->type == GDK_KEY_PRESS ||
        event->type == GDK_KEY_RELEASE) &&
       event->window == data->root &&
@@ -538,6 +594,9 @@ void setup_main_app (GromitData *data, int argc, char ** argv)
   data->hot_keycode = 0;
 
   data->undo_keyval = DEFAULT_UNDOKEY;
+  data->undo_keycode = 0;
+
+  data->extra_modifier_keyval = DEFAULT_EXTRA_MODIFIERKEY;
   data->undo_keycode = 0;
 
   char *xdg_current_desktop = getenv("XDG_CURRENT_DESKTOP");
@@ -686,62 +745,9 @@ void setup_main_app (GromitData *data, int argc, char ** argv)
   // might have been in key file
   gtk_widget_set_opacity(data->win, data->opacity);
 
-  /*
-     FIND HOTKEY KEYCODE
-  */
-  if (data->hot_keyval)
-    {
-      GdkKeymap    *keymap;
-      GdkKeymapKey *keys;
-      gint          n_keys;
-      guint         keyval;
-
-      if (strlen (data->hot_keyval) > 0 &&
-          strcasecmp (data->hot_keyval, "none") != 0)
-        {
-          keymap = gdk_keymap_get_for_display (data->display);
-          keyval = gdk_keyval_from_name (data->hot_keyval);
-
-          if (!keyval || !gdk_keymap_get_entries_for_keyval (keymap, keyval,
-                                                             &keys, &n_keys))
-            {
-              g_printerr ("cannot find the key \"%s\"\n", data->hot_keyval);
-              exit (1);
-            }
-
-          data->hot_keycode = keys[0].keycode;
-          g_free (keys);
-        }
-    }
-
-  /*
-     FIND UNDOKEY KEYCODE
-  */
-  if (data->undo_keyval)
-    {
-      GdkKeymap    *keymap;
-      GdkKeymapKey *keys;
-      gint          n_keys;
-      guint         keyval;
-
-      if (strlen (data->undo_keyval) > 0 &&
-          strcasecmp (data->undo_keyval, "none") != 0)
-        {
-          keymap = gdk_keymap_get_for_display (data->display);
-          keyval = gdk_keyval_from_name (data->undo_keyval);
-
-          if (!keyval || !gdk_keymap_get_entries_for_keyval (keymap, keyval,
-                                                             &keys, &n_keys))
-            {
-              g_printerr ("cannot find the key \"%s\"\n", data->undo_keyval);
-              exit (1);
-            }
-
-          data->undo_keycode = keys[0].keycode;
-          g_free (keys);
-        }
-    }
-
+  data->hot_keycode = find_keycode(data->display, data->hot_keyval);
+  data->undo_keycode = find_keycode(data->display, data->undo_keyval);
+  data->extra_modifier_keycode = find_keycode(data->display, data->extra_modifier_keyval);
 
   /*
      INPUT DEVICES
@@ -1110,4 +1116,31 @@ void indicate_active(GromitData *data, gboolean YESNO)
 	app_indicator_set_icon(data->trayicon, "net.christianbeier.Gromit-MPX.active");
     else
 	app_indicator_set_icon(data->trayicon, "net.christianbeier.Gromit-MPX");
+}
+
+guint find_keycode(GdkDisplay *display, gchar *keyname)
+{
+  GdkKeymap    *keymap;
+  GdkKeymapKey *keys;
+  gint          n_keys;
+  guint         keyval;
+  guint         keycode;
+
+  if (!keyname || strlen (keyname) <= 0 || strcasecmp (keyname, "none") == 0)
+    return 0;
+
+  keymap = gdk_keymap_get_for_display (display);
+  keyval = gdk_keyval_from_name (keyname);
+
+  if (!keyval || !gdk_keymap_get_entries_for_keyval (keymap, keyval,
+                                                      &keys, &n_keys))
+    {
+      g_printerr ("cannot find the key \"%s\"\n", keyname);
+      exit (1);
+    }
+
+  keycode = keys[0].keycode;
+  g_free (keys);
+
+  return keycode;
 }

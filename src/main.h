@@ -100,6 +100,7 @@ typedef struct
   GdkDevice*   device;
   guint        index;
   guint        state;
+  gboolean     extra_modifier_state;
   GromitPaintContext *cur_context;
   gboolean     is_grabbed;
   gboolean     was_grabbed;
@@ -124,6 +125,9 @@ typedef struct
   guint        hot_keycode;
   gchar       *undo_keyval;
   guint        undo_keycode;
+  gboolean     extra_modifier_state;
+  gchar       *extra_modifier_keyval;
+  guint        extra_modifier_keycode;
   gdouble      opacity;
 
   GdkRGBA     *white;
@@ -184,5 +188,7 @@ GromitPaintContext *paint_context_new (GromitData *data, GromitPaintType type,
 void paint_context_free (GromitPaintContext *context);
 
 void indicate_active(GromitData *data, gboolean YESNO);
+
+guint find_keycode(GdkDisplay *display, gchar *keyname);
 
 #endif
