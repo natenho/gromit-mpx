@@ -4,6 +4,7 @@
 #define INPUT_H
 
 #include "main.h"
+#include "config.h"
 
 void setup_input_devices (GromitData *data);
 void shutdown_input_devices (GromitData *data);

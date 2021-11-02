@@ -597,7 +597,7 @@ void setup_main_app (GromitData *data, int argc, char ** argv)
   data->undo_keycode = 0;
 
   data->extra_modifier_keyval = DEFAULT_EXTRA_MODIFIERKEY;
-  data->undo_keycode = 0;
+  data->extra_modifier_keycode = 0;
 
   char *xdg_current_desktop = getenv("XDG_CURRENT_DESKTOP");
   if (xdg_current_desktop && strcmp(xdg_current_desktop, "XFCE") == 0) {
