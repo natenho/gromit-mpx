@@ -351,7 +351,7 @@ void select_tool (GromitData *data,
         }
       while (i < req_buttons);
 
-      // Extra modifier
+      // Extra modifier  //TODO remove code duplication
       if (!req_modifier && data->extra_modifier_state)
       {
         buttons = 0;
@@ -976,6 +976,30 @@ int main_client (int argc, char **argv, GromitData *data)
            else
              data->clientdata = "-1"; /* default to grab all */
          }
+       else if (strcmp (arg, "-a") == 0 ||
+           strcmp (arg, "--activate") == 0)
+         {
+           action = GA_ACTIVATE;
+           if (i+1 < argc && argv[i+1][0] != '-') /* there is an id supplied */ //TODO remove code duplication
+             {
+               data->clientdata  = argv[i+1];
+               ++i;
+             }
+           else
+             data->clientdata = "-1"; /* default to grab all */
+         }
+        else if (strcmp (arg, "-x") == 0 ||
+           strcmp (arg, "--deactivate") == 0)
+         {
+           action = GA_DEACTIVATE;
+           if (i+1 < argc && argv[i+1][0] != '-') /* there is an id supplied */
+             {
+               data->clientdata  = argv[i+1];
+               ++i;
+             }
+           else
+             data->clientdata = "-1"; /* default to grab all */
+         }
        else if (strcmp (arg, "-v") == 0 ||
                 strcmp (arg, "--visibility") == 0)
          {
@@ -1087,6 +1111,8 @@ int main (int argc, char **argv)
 
   gtk_selection_owner_set (data->win, GA_DATA, GDK_CURRENT_TIME);
   gtk_selection_add_target (data->win, GA_DATA, GA_TOGGLEDATA, 1007);
+  gtk_selection_add_target (data->win, GA_DATA, GA_ACTIVATEDATA, 1008);
+  gtk_selection_add_target (data->win, GA_DATA, GA_DEACTIVATEDATA, 1009);
 
 
 

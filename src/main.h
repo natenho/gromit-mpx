@@ -54,8 +54,10 @@
 #define GA_UNDO       gdk_atom_intern ("Gromit/undo", FALSE)
 #define GA_REDO       gdk_atom_intern ("Gromit/redo", FALSE)
 
-#define GA_DATA       gdk_atom_intern ("Gromit/data", FALSE)
-#define GA_TOGGLEDATA gdk_atom_intern ("Gromit/toggledata", FALSE)
+#define GA_DATA           gdk_atom_intern("Gromit/data", FALSE)
+#define GA_TOGGLEDATA     gdk_atom_intern("Gromit/toggledata", FALSE)
+#define GA_ACTIVATEDATA   gdk_atom_intern("Gromit/activatedata", FALSE)
+#define GA_DEACTIVATEDATA gdk_atom_intern("Gromit/deactivatedata", FALSE)
 
 #define GROMIT_MAX_UNDO 4
 
@@ -106,7 +108,6 @@ typedef struct
   gboolean     was_grabbed;
   GdkDevice*   lastslave;
 } GromitDeviceData;
-
 
 typedef struct
 {
