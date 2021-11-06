@@ -131,6 +131,8 @@ typedef struct
   guint        extra_modifier_keycode;
   gchar       *extra_undo_keyval;
   guint        extra_undo_keycode;
+  gchar       *extra_redo_keyval;
+  guint        extra_redo_keycode;
   gdouble      opacity;
 
   GdkRGBA     *white;

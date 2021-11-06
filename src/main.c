@@ -551,6 +551,8 @@ void main_do_event(GdkEventAny *event,
       data->extra_modifier_state = TRUE;
     else if (keycode == data->extra_undo_keycode && ((GdkEventKey *)event)->state & GDK_CONTROL_MASK)
       undo_drawing(data);
+    else if (keycode == data->extra_redo_keycode && ((GdkEventKey *)event)->state & GDK_CONTROL_MASK)
+      redo_drawing(data);
   }
   else if (event->type == GDK_KEY_RELEASE)
   {
@@ -564,7 +566,8 @@ void main_do_event(GdkEventAny *event,
       (keycode == data->hot_keycode ||
       keycode == data->undo_keycode ||
       keycode == data->extra_modifier_keycode ||
-      keycode == data->extra_undo_keycode))
+      keycode == data->extra_undo_keycode ||
+      keycode == data->extra_redo_keycode))
   {
     /* redirect the event to our main window, so that GTK+ doesn't
        * throw it away (there is no GtkWidget for the root window...)
@@ -606,6 +609,9 @@ void setup_main_app (GromitData *data, int argc, char ** argv)
 
   data->extra_undo_keyval = DEFAULT_EXTRA_UNDOKEY;
   data->extra_undo_keycode = 0;
+
+  data->extra_redo_keyval = DEFAULT_EXTRA_REDOKEY;
+  data->extra_redo_keycode = 0;
 
   char *xdg_current_desktop = getenv("XDG_CURRENT_DESKTOP");
   if (xdg_current_desktop && strcmp(xdg_current_desktop, "XFCE") == 0) {
@@ -757,6 +763,7 @@ void setup_main_app (GromitData *data, int argc, char ** argv)
   data->undo_keycode = find_keycode(data->display, data->undo_keyval);
   data->extra_modifier_keycode = find_keycode(data->display, data->extra_modifier_keyval);
   data->extra_undo_keycode = find_keycode(data->display, data->extra_undo_keyval);
+  data->extra_redo_keycode = find_keycode(data->display, data->extra_redo_keyval);
 
   /*
      INPUT DEVICES

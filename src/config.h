@@ -54,6 +54,9 @@ int parse_args (int argc, char **argv, GromitData *data);
 #ifndef DEFAULT_EXTRA_UNDOKEY
 #define DEFAULT_EXTRA_UNDOKEY "z"
 #endif
+#ifndef DEFAULT_EXTRA_REDOKEY
+#define DEFAULT_EXTRA_REDOKEY "y"
+#endif
 
 void read_keyfile(GromitData *data);
 
