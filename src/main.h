@@ -79,6 +79,17 @@ typedef enum
   GROMIT_ARROW_AT_BOTH = GROMIT_ARROW_AT_START | GROMIT_ARROW_AT_END
 } GromitArrowPosition;
 
+typedef enum
+{
+  GROMIT_COLOR_BLACK,
+  GROMIT_COLOR_WHITE,
+  GROMIT_COLOR_RED,
+  GROMIT_COLOR_GREEN,
+  GROMIT_COLOR_BLUE,
+  GROMIT_COLOR_YELLOW,
+  GROMIT_BASIC_COLOR_COUNT
+} GromitPaintColor;
+
 typedef struct
 {
   GromitPaintType     type;
@@ -133,14 +144,22 @@ typedef struct
   guint        extra_undo_keycode;
   gchar       *extra_redo_keyval;
   guint        extra_redo_keycode;
+  gchar       *switch_color_keyval[GROMIT_BASIC_COLOR_COUNT];
+  guint        switch_color_keycode[GROMIT_BASIC_COLOR_COUNT];
   gdouble      opacity;
 
   GdkRGBA     *white;
   GdkRGBA     *black;
   GdkRGBA     *red;
+  GdkRGBA     *green;
+  GdkRGBA     *blue;
+  GdkRGBA     *yellow;
 
   GromitPaintContext *default_pen;
   GromitPaintContext *default_eraser;
+
+  GdkRGBA     *switch_color;
+  GdkRGBA     *switch_colors[GROMIT_BASIC_COLOR_COUNT];
 
   GHashTable  *tool_config;
 

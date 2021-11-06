@@ -57,6 +57,9 @@ int parse_args (int argc, char **argv, GromitData *data);
 #ifndef DEFAULT_EXTRA_REDOKEY
 #define DEFAULT_EXTRA_REDOKEY "y"
 #endif
+#ifndef DEFAULT_COLOR_KEYS
+#define DEFAULT_COLOR_KEYS "k", "w", "r", "g", "b", "y"
+#endif
 
 void read_keyfile(GromitData *data);
 

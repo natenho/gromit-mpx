@@ -544,30 +544,43 @@ void main_do_event(GdkEventAny *event,
                    GromitData *data)
 {
   guint keycode = ((GdkEventKey *)event)->hardware_keycode;
+  gboolean keycode_handled = FALSE;
 
   if (event->type == GDK_KEY_PRESS)
   {
+    keycode_handled = TRUE;
+
     if (keycode == data->extra_modifier_keycode)
       data->extra_modifier_state = TRUE;
     else if (keycode == data->extra_undo_keycode && ((GdkEventKey *)event)->state & GDK_CONTROL_MASK)
       undo_drawing(data);
     else if (keycode == data->extra_redo_keycode && ((GdkEventKey *)event)->state & GDK_CONTROL_MASK)
       redo_drawing(data);
+    else
+      keycode_handled = FALSE;
+
+    for (size_t i = 0; i < GROMIT_BASIC_COLOR_COUNT; i++)
+    {
+      if (keycode == data->switch_color_keycode[i])
+      {
+        data->switch_color = data->switch_colors[i];
+        keycode_handled = TRUE;
+        break;
+      }
+    }
+
   }
   else if (event->type == GDK_KEY_RELEASE)
   {
+    keycode_handled = TRUE;
+
     if (keycode == data->extra_modifier_keycode)
       data->extra_modifier_state = FALSE;
+    else
+      keycode_handled = FALSE;
   }
 
-  if ((event->type == GDK_KEY_PRESS ||
-       event->type == GDK_KEY_RELEASE) &&
-      event->window == data->root &&
-      (keycode == data->hot_keycode ||
-      keycode == data->undo_keycode ||
-      keycode == data->extra_modifier_keycode ||
-      keycode == data->extra_undo_keycode ||
-      keycode == data->extra_redo_keycode))
+  if (keycode_handled && event->window == data->root)
   {
     /* redirect the event to our main window, so that GTK+ doesn't
        * throw it away (there is no GtkWidget for the root window...)
@@ -629,13 +642,28 @@ void setup_main_app (GromitData *data, int argc, char ** argv)
   g_free(data->white);
   g_free(data->black);
   g_free(data->red);
-  data->white = g_malloc (sizeof (GdkRGBA));
-  data->black = g_malloc (sizeof (GdkRGBA));
-  data->red   = g_malloc (sizeof (GdkRGBA));
+  g_free(data->green);
+  g_free(data->blue);
+  g_free(data->yellow);
+  data->white = g_malloc(sizeof(GdkRGBA));
+  data->black = g_malloc(sizeof(GdkRGBA));
+  data->red = g_malloc(sizeof(GdkRGBA));
+  data->green = g_malloc(sizeof(GdkRGBA));
+  data->blue = g_malloc(sizeof(GdkRGBA));
+  data->yellow = g_malloc(sizeof(GdkRGBA));
   gdk_rgba_parse(data->white, "#FFFFFF");
   gdk_rgba_parse(data->black, "#000000");
   gdk_rgba_parse(data->red, "#FF0000");
+  gdk_rgba_parse(data->green, "#00FF00");
+  gdk_rgba_parse(data->blue, "#0000FF");
+  gdk_rgba_parse(data->yellow, "#FFFF00");
 
+  data->switch_colors[GROMIT_COLOR_BLACK] = data->black;
+  data->switch_colors[GROMIT_COLOR_WHITE] = data->white;
+  data->switch_colors[GROMIT_COLOR_RED] = data->red;
+  data->switch_colors[GROMIT_COLOR_GREEN] = data->green;
+  data->switch_colors[GROMIT_COLOR_BLUE] = data->blue;
+  data->switch_colors[GROMIT_COLOR_YELLOW] = data->yellow;
 
   /*
      CURSORS
@@ -764,6 +792,13 @@ void setup_main_app (GromitData *data, int argc, char ** argv)
   data->extra_modifier_keycode = find_keycode(data->display, data->extra_modifier_keyval);
   data->extra_undo_keycode = find_keycode(data->display, data->extra_undo_keyval);
   data->extra_redo_keycode = find_keycode(data->display, data->extra_redo_keyval);
+
+  gchar *switch_color_keyval[GROMIT_BASIC_COLOR_COUNT] = { DEFAULT_COLOR_KEYS };
+
+  for (size_t i = 0; i < GROMIT_BASIC_COLOR_COUNT; i++)
+  {
+    data->switch_color_keycode[i] = find_keycode(data->display, switch_color_keyval[i]);
+  }
 
   /*
      INPUT DEVICES

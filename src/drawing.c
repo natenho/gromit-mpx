@@ -20,6 +20,9 @@ void draw_line (GromitData *data,
 
   if (devdata->cur_context->paint_ctx)
     {
+      if(data->switch_color)
+        gdk_cairo_set_source_rgba(devdata->cur_context->paint_ctx, data->switch_color);
+
       cairo_set_line_width(devdata->cur_context->paint_ctx, data->maxwidth);
       cairo_set_line_cap(devdata->cur_context->paint_ctx, CAIRO_LINE_CAP_ROUND);
       cairo_set_line_join(devdata->cur_context->paint_ctx, CAIRO_LINE_JOIN_ROUND);
@@ -96,6 +99,9 @@ void draw_ellipse(GromitData *data,
 
   if (devdata->cur_context->paint_ctx)
     {
+      if(data->switch_color)
+        gdk_cairo_set_source_rgba(devdata->cur_context->paint_ctx, data->switch_color);
+
       cairo_save(devdata->cur_context->paint_ctx);
       cairo_translate(devdata->cur_context->paint_ctx, rect.x + (rect.width / 2.0), rect.y + (rect.height / 2.0));
       cairo_scale(devdata->cur_context->paint_ctx, rect.width / 2.0, rect.height / 2.0);
@@ -134,6 +140,9 @@ void draw_rectangle(GromitData *data,
 
   if (devdata->cur_context->paint_ctx)
     {
+      if(data->switch_color)
+        gdk_cairo_set_source_rgba(devdata->cur_context->paint_ctx, data->switch_color);
+
       cairo_rectangle(devdata->cur_context->paint_ctx, rect.x, rect.y, rect.width, rect.height);
 
       cairo_set_line_width(devdata->cur_context->paint_ctx, data->maxwidth);
@@ -188,6 +197,9 @@ void draw_arrow (GromitData *data,
 
   if (devdata->cur_context->paint_ctx)
     {
+      if(data->switch_color)
+        gdk_cairo_set_source_rgba(devdata->cur_context->paint_ctx, data->switch_color);
+
       cairo_set_line_width(devdata->cur_context->paint_ctx, 1);
       cairo_set_line_cap(devdata->cur_context->paint_ctx, CAIRO_LINE_CAP_ROUND);
       cairo_set_line_join(devdata->cur_context->paint_ctx, CAIRO_LINE_JOIN_ROUND);

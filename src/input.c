@@ -326,6 +326,11 @@ void release_grab (GromitData *data,
 			release_hotkey(data->display, data->root, find_keycode(data->display, DEFAULT_EXTRA_UNDOKEY), kbd_dev_id);
 			release_hotkey(data->display, data->root, find_keycode(data->display, DEFAULT_EXTRA_REDOKEY), kbd_dev_id);
 
+			for (size_t i = 0; i < GROMIT_BASIC_COLOR_COUNT; i++)
+			{
+				release_hotkey(data->display, data->root, data->switch_color_keycode[i], kbd_dev_id);
+			}
+
 	    XSync(GDK_DISPLAY_XDISPLAY(data->display), False);
 	    if(gdk_x11_display_error_trap_pop(data->display))
 	      g_printerr("WARNING: Ungrabbing device '%s' failed.\n", gdk_device_get_name(devdata->device));
@@ -356,6 +361,11 @@ void release_grab (GromitData *data,
 			release_hotkey(data->display, data->root, find_keycode(data->display, DEFAULT_EXTRA_MODIFIERKEY), kbd_dev_id);
 			release_hotkey(data->display, data->root, find_keycode(data->display, DEFAULT_EXTRA_UNDOKEY), kbd_dev_id);
 			release_hotkey(data->display, data->root, find_keycode(data->display, DEFAULT_EXTRA_REDOKEY), kbd_dev_id);
+
+			for (size_t i = 0; i < GROMIT_BASIC_COLOR_COUNT; i++)
+			{
+				release_hotkey(data->display, data->root, data->switch_color_keycode[i], kbd_dev_id);
+			}
 
       devdata->is_grabbed = 0;
       /* workaround buggy GTK3 ? */
@@ -431,6 +441,11 @@ void acquire_grab(GromitData *data,
 			grab_hotkey(data->display, data->root, find_keycode(data->display, DEFAULT_EXTRA_MODIFIERKEY), kbd_dev_id);
 			grab_hotkey(data->display, data->root, find_keycode(data->display, DEFAULT_EXTRA_UNDOKEY), kbd_dev_id);
 			grab_hotkey(data->display, data->root, find_keycode(data->display, DEFAULT_EXTRA_REDOKEY), kbd_dev_id);
+			for (size_t i = 0; i < GROMIT_BASIC_COLOR_COUNT; i++)
+			{
+				grab_hotkey(data->display, data->root, data->switch_color_keycode[i], kbd_dev_id);
+			}
+
 
 			devdata->is_grabbed = 1;
 		}
@@ -474,6 +489,11 @@ void acquire_grab(GromitData *data,
 		grab_hotkey(data->display, data->root, find_keycode(data->display, DEFAULT_EXTRA_MODIFIERKEY), kbd_dev_id);
 		grab_hotkey(data->display, data->root, find_keycode(data->display, DEFAULT_EXTRA_UNDOKEY), kbd_dev_id);
 		grab_hotkey(data->display, data->root, find_keycode(data->display, DEFAULT_EXTRA_REDOKEY), kbd_dev_id);
+
+		for (size_t i = 0; i < GROMIT_BASIC_COLOR_COUNT; i++)
+		{
+			grab_hotkey(data->display, data->root, data->switch_color_keycode[i], kbd_dev_id);
+		}
 
 		devdata->is_grabbed = 1;
 
