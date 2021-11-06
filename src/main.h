@@ -129,6 +129,8 @@ typedef struct
   gboolean     extra_modifier_state;
   gchar       *extra_modifier_keyval;
   guint        extra_modifier_keycode;
+  gchar       *extra_undo_keyval;
+  guint        extra_undo_keycode;
   gdouble      opacity;
 
   GdkRGBA     *white;

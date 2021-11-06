@@ -540,36 +540,41 @@ void redo_drawing (GromitData *data)
  * Functions for handling various (GTK+)-Events
  */
 
-
-void main_do_event (GdkEventAny *event,
-		    GromitData  *data)
+void main_do_event(GdkEventAny *event,
+                   GromitData *data)
 {
-  guint keycode = ((GdkEventKey *) event)->hardware_keycode;
+  guint keycode = ((GdkEventKey *)event)->hardware_keycode;
 
-  if(event->type == GDK_KEY_PRESS && keycode == data->extra_modifier_keycode)
-    data->extra_modifier_state = TRUE;
-
-  if(event->type == GDK_KEY_RELEASE && keycode == data->extra_modifier_keycode)
-    data->extra_modifier_state = FALSE;
+  if (event->type == GDK_KEY_PRESS)
+  {
+    if (keycode == data->extra_modifier_keycode)
+      data->extra_modifier_state = TRUE;
+    else if (keycode == data->extra_undo_keycode && ((GdkEventKey *)event)->state & GDK_CONTROL_MASK)
+      undo_drawing(data);
+  }
+  else if (event->type == GDK_KEY_RELEASE)
+  {
+    if (keycode == data->extra_modifier_keycode)
+      data->extra_modifier_state = FALSE;
+  }
 
   if ((event->type == GDK_KEY_PRESS ||
        event->type == GDK_KEY_RELEASE) &&
       event->window == data->root &&
-      (keycode == data->hot_keycode || keycode == data->undo_keycode))
-    {
-      /* redirect the event to our main window, so that GTK+ doesn't
+      (keycode == data->hot_keycode ||
+      keycode == data->undo_keycode ||
+      keycode == data->extra_modifier_keycode ||
+      keycode == data->extra_undo_keycode))
+  {
+    /* redirect the event to our main window, so that GTK+ doesn't
        * throw it away (there is no GtkWidget for the root window...)
        */
-      event->window = gtk_widget_get_window(data->win);
-      g_object_ref (gtk_widget_get_window(data->win));
-    }
+    event->window = gtk_widget_get_window(data->win);
+    g_object_ref(gtk_widget_get_window(data->win));
+  }
 
-  gtk_main_do_event ((GdkEvent *) event);
+  gtk_main_do_event((GdkEvent *)event);
 }
-
-
-
-
 
 void setup_main_app (GromitData *data, int argc, char ** argv)
 {
@@ -598,6 +603,9 @@ void setup_main_app (GromitData *data, int argc, char ** argv)
 
   data->extra_modifier_keyval = DEFAULT_EXTRA_MODIFIERKEY;
   data->extra_modifier_keycode = 0;
+
+  data->extra_undo_keyval = DEFAULT_EXTRA_UNDOKEY;
+  data->extra_undo_keycode = 0;
 
   char *xdg_current_desktop = getenv("XDG_CURRENT_DESKTOP");
   if (xdg_current_desktop && strcmp(xdg_current_desktop, "XFCE") == 0) {
@@ -748,6 +756,7 @@ void setup_main_app (GromitData *data, int argc, char ** argv)
   data->hot_keycode = find_keycode(data->display, data->hot_keyval);
   data->undo_keycode = find_keycode(data->display, data->undo_keyval);
   data->extra_modifier_keycode = find_keycode(data->display, data->extra_modifier_keyval);
+  data->extra_undo_keycode = find_keycode(data->display, data->extra_undo_keyval);
 
   /*
      INPUT DEVICES

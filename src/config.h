@@ -51,6 +51,9 @@ int parse_args (int argc, char **argv, GromitData *data);
 #ifndef DEFAULT_EXTRA_MODIFIERKEY
 #define DEFAULT_EXTRA_MODIFIERKEY "Tab"
 #endif
+#ifndef DEFAULT_EXTRA_UNDOKEY
+#define DEFAULT_EXTRA_UNDOKEY "z"
+#endif
 
 void read_keyfile(GromitData *data);
 
