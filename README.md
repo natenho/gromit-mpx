@@ -1,12 +1,6 @@
 # Gromit-MPX
 
-[![Build Status](https://travis-ci.org/bk138/gromit-mpx.svg?branch=master)](https://travis-ci.org/bk138/gromit-mpx)
-[![Help making this possible](https://img.shields.io/badge/liberapay-donate-yellow.png)](https://liberapay.com/bk138/donate)
-[![Become a patron](https://img.shields.io/badge/patreon-donate-yellow.svg)](https://www.patreon.com/bk138)
-[![Donate](https://img.shields.io/badge/paypal-donate-yellow.png)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=N7GSSPRPUSTPU&source=url)
-[![Gitter](https://badges.gitter.im/gromit-mpx/community.svg)](https://gitter.im/gromit-mpx/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
-
-[<img src="https://flathub.org/assets/badges/flathub-badge-i-en.png" width="190px" />](https://flathub.org/apps/details/net.christianbeier.Gromit-MPX)
+## This is a fork of [Gromit-MPX](https://github.com/bk138/gromit-mpx) intended to support the same screen drawing experience of [Microsoft ZoomIt](https://docs.microsoft.com/en-us/sysinternals/downloads/zoomit).
 
 Gromit-MPX is an on-screen annotation tool that works with any Unix
 desktop environment under X11 as well as Wayland.
