@@ -204,16 +204,19 @@ void draw_arrow(GromitData *data,
 
   if (devdata->cur_context->paint_ctx)
   {
-    cairo_set_line_width(devdata->cur_context->paint_ctx, 1);
     cairo_set_line_cap(devdata->cur_context->paint_ctx, CAIRO_LINE_CAP_ROUND);
     cairo_set_line_join(devdata->cur_context->paint_ctx, CAIRO_LINE_JOIN_ROUND);
 
     //Erase the beginning of the line in order to keep only the arrow point
+    cairo_set_line_width(devdata->cur_context->paint_ctx, data->maxwidth + 1);
     cairo_operator_t previous_operator = cairo_get_operator(devdata->cur_context->paint_ctx);
     cairo_set_operator(devdata->cur_context->paint_ctx, CAIRO_OPERATOR_CLEAR);
-    cairo_rectangle(devdata->cur_context->paint_ctx, x1 - width * 2, y1 - width * 2, width * 4, width * 4);
-    cairo_fill(devdata->cur_context->paint_ctx);
+    cairo_move_to(devdata->cur_context->paint_ctx, x1, y1);
+    cairo_line_to(devdata->cur_context->paint_ctx, origin_x, origin_y);
+    cairo_stroke(devdata->cur_context->paint_ctx);
     cairo_set_operator(devdata->cur_context->paint_ctx, previous_operator);
+
+    cairo_set_line_width(devdata->cur_context->paint_ctx, 1);
 
     gdk_cairo_set_source_rgba(devdata->cur_context->paint_ctx, data->switch_color ? data->switch_color : devdata->cur_context->paint_color);
 
