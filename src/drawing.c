@@ -159,76 +159,91 @@ void draw_rectangle(GromitData *data,
   data->painted = 1;
 }
 
-void draw_arrow (GromitData *data,
-		 GdkDevice *dev,
-		 gint x1, gint y1,
-		 gint width,
-		 gfloat direction)
+void draw_arrow(GromitData *data,
+                GdkDevice *dev,
+                gint x1, gint y1,
+                gint width,
+                gfloat direction)
 {
   GdkRectangle rect;
-  GdkPoint arrowhead [4];
+  GdkPoint arrowhead[4];
 
   /* get the data for this device */
   GromitDeviceData *devdata = g_hash_table_lookup(data->devdatatable, dev);
 
   width = width / 2;
 
+  int origin_factor = 4;
+  int back_factor = 2;
+  int side_factor = 3;
+
+  int origin_x = x1 - origin_factor * width * cos(direction);
+  int origin_y = y1 - origin_factor * width * sin(direction);
+
   /* I doubt that calculating the boundary box more exact is very useful */
-  rect.x = x1 - 4 * width - 1;
-  rect.y = y1 - 4 * width - 1;
+  rect.x = origin_x - 4 * width - 1;
+  rect.y = origin_y - 4 * width - 1;
   rect.width = 8 * width + 2;
   rect.height = 8 * width + 2;
 
-  arrowhead [0].x = x1 + 4 * width * cos (direction);
-  arrowhead [0].y = y1 + 4 * width * sin (direction);
+  arrowhead[0].x = origin_x + origin_factor * width * cos(direction);
+  arrowhead[0].y = origin_y + origin_factor * width * sin(direction);
 
-  arrowhead [1].x = x1 - 3 * width * cos (direction)
-                       + 3 * width * sin (direction);
-  arrowhead [1].y = y1 - 3 * width * cos (direction)
-                       - 3 * width * sin (direction);
+  arrowhead[1].x = origin_x - side_factor * width * cos(direction)
+                            + side_factor * width * sin(direction);
+  arrowhead[1].y = origin_y - side_factor * width * cos(direction)
+                            - side_factor * width * sin(direction);
 
-  arrowhead [2].x = x1 - 2 * width * cos (direction);
-  arrowhead [2].y = y1 - 2 * width * sin (direction);
+  arrowhead[2].x = origin_x - back_factor * width * cos(direction);
+  arrowhead[2].y = origin_y - back_factor * width * sin(direction);
 
-  arrowhead [3].x = x1 - 3 * width * cos (direction)
-                       - 3 * width * sin (direction);
-  arrowhead [3].y = y1 + 3 * width * cos (direction)
-                       - 3 * width * sin (direction);
+  arrowhead[3].x = origin_x - side_factor * width * cos(direction)
+                            - side_factor * width * sin(direction);
+  arrowhead[3].y = origin_y + side_factor * width * cos(direction)
+                            - side_factor * width * sin(direction);
 
   if (devdata->cur_context->paint_ctx)
-    {
-      if(data->switch_color)
-        gdk_cairo_set_source_rgba(devdata->cur_context->paint_ctx, data->switch_color);
+  {
+    cairo_set_line_cap(devdata->cur_context->paint_ctx, CAIRO_LINE_CAP_ROUND);
+    cairo_set_line_join(devdata->cur_context->paint_ctx, CAIRO_LINE_JOIN_ROUND);
 
-      cairo_set_line_width(devdata->cur_context->paint_ctx, 1);
-      cairo_set_line_cap(devdata->cur_context->paint_ctx, CAIRO_LINE_CAP_ROUND);
-      cairo_set_line_join(devdata->cur_context->paint_ctx, CAIRO_LINE_JOIN_ROUND);
+    //Erase the beginning of the line in order to keep only the arrow point
+    cairo_set_line_width(devdata->cur_context->paint_ctx, data->maxwidth + 1);
+    cairo_operator_t previous_operator = cairo_get_operator(devdata->cur_context->paint_ctx);
+    cairo_set_operator(devdata->cur_context->paint_ctx, CAIRO_OPERATOR_CLEAR);
+    cairo_move_to(devdata->cur_context->paint_ctx, x1, y1);
+    cairo_line_to(devdata->cur_context->paint_ctx, origin_x, origin_y);
+    cairo_stroke(devdata->cur_context->paint_ctx);
+    cairo_set_operator(devdata->cur_context->paint_ctx, previous_operator);
 
-      cairo_move_to(devdata->cur_context->paint_ctx, arrowhead[0].x, arrowhead[0].y);
-      cairo_line_to(devdata->cur_context->paint_ctx, arrowhead[1].x, arrowhead[1].y);
-      cairo_line_to(devdata->cur_context->paint_ctx, arrowhead[2].x, arrowhead[2].y);
-      cairo_line_to(devdata->cur_context->paint_ctx, arrowhead[3].x, arrowhead[3].y);
-      cairo_fill(devdata->cur_context->paint_ctx);
+    cairo_set_line_width(devdata->cur_context->paint_ctx, 1);
 
-      gdk_cairo_set_source_rgba(devdata->cur_context->paint_ctx, data->black);
+    gdk_cairo_set_source_rgba(devdata->cur_context->paint_ctx, data->switch_color ? data->switch_color : devdata->cur_context->paint_color);
 
-      cairo_move_to(devdata->cur_context->paint_ctx, arrowhead[0].x, arrowhead[0].y);
-      cairo_line_to(devdata->cur_context->paint_ctx, arrowhead[1].x, arrowhead[1].y);
-      cairo_line_to(devdata->cur_context->paint_ctx, arrowhead[2].x, arrowhead[2].y);
-      cairo_line_to(devdata->cur_context->paint_ctx, arrowhead[3].x, arrowhead[3].y);
-      cairo_line_to(devdata->cur_context->paint_ctx, arrowhead[0].x, arrowhead[0].y);
-      cairo_stroke(devdata->cur_context->paint_ctx);
+    cairo_move_to(devdata->cur_context->paint_ctx, arrowhead[0].x, arrowhead[0].y);
+    cairo_line_to(devdata->cur_context->paint_ctx, arrowhead[1].x, arrowhead[1].y);
+    cairo_line_to(devdata->cur_context->paint_ctx, arrowhead[2].x, arrowhead[2].y);
+    cairo_line_to(devdata->cur_context->paint_ctx, arrowhead[3].x, arrowhead[3].y);
+    cairo_fill(devdata->cur_context->paint_ctx);
 
-      gdk_cairo_set_source_rgba(devdata->cur_context->paint_ctx, devdata->cur_context->paint_color);
+    gdk_cairo_set_source_rgba(devdata->cur_context->paint_ctx, data->black);
 
-      data->modified = 1;
+    cairo_move_to(devdata->cur_context->paint_ctx, arrowhead[0].x, arrowhead[0].y);
+    cairo_line_to(devdata->cur_context->paint_ctx, arrowhead[1].x, arrowhead[1].y);
+    cairo_line_to(devdata->cur_context->paint_ctx, arrowhead[2].x, arrowhead[2].y);
+    cairo_line_to(devdata->cur_context->paint_ctx, arrowhead[3].x, arrowhead[3].y);
+    cairo_line_to(devdata->cur_context->paint_ctx, arrowhead[0].x, arrowhead[0].y);
+    cairo_stroke(devdata->cur_context->paint_ctx);
 
-      gdk_window_invalidate_rect(gtk_widget_get_window(data->win), &rect, 0);
-    }
+    gdk_cairo_set_source_rgba(devdata->cur_context->paint_ctx, data->switch_color ? data->switch_color : devdata->cur_context->paint_color);
+
+    data->modified = 1;
+
+    gdk_window_invalidate_rect(gtk_widget_get_window(data->win), &rect, 0);
+  }
 
   data->painted = 1;
 }
-
 
 void coord_list_prepend (GromitData *data,
 			 GdkDevice* dev,
