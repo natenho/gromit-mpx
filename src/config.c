@@ -203,6 +203,7 @@ gboolean parse_config (GromitData *data)
   g_scanner_scope_add_symbol (scanner, 1, "CONTROL", (gpointer) 12);
   g_scanner_scope_add_symbol (scanner, 1, "META",    (gpointer) 13);
   g_scanner_scope_add_symbol (scanner, 1, "ALT",     (gpointer) 13);
+  g_scanner_scope_add_symbol (scanner, 1, "TAB",     (gpointer) 14);
 
   g_scanner_scope_add_symbol (scanner, 2, "size",         (gpointer) 1);
   g_scanner_scope_add_symbol (scanner, 2, "color",        (gpointer) 2);
@@ -443,6 +444,7 @@ gboolean parse_config (GromitData *data)
             }
 
           context = paint_context_new (data, type, fg_color, width, arrowsize, arrowposition, minwidth, maxwidth);
+
           g_hash_table_insert (data->tool_config, name, context);
         }
       else if (token == G_TOKEN_SYMBOL &&

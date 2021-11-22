@@ -196,7 +196,10 @@ void on_clientapp_selection_get (GtkWidget          *widget,
   if(data->debug)
     g_printerr("DEBUG: clientapp received request.\n");
 
-  if (gtk_selection_data_get_target(selection_data) == GA_TOGGLEDATA)
+  GdkAtom action;
+  action = gtk_selection_data_get_target(selection_data);
+
+  if (action == GA_TOGGLEDATA || action == GA_ACTIVATEDATA || action == GA_DEACTIVATEDATA)
     {
       ans = data->clientdata;
     }
@@ -257,11 +260,7 @@ gboolean on_buttonpress (GtkWidget *win,
 
   /* See GdkModifierType. Am I fixing a Gtk misbehaviour???  */
   ev->state |= 1 << (ev->button + 7);
-
-
-  if (ev->state != devdata->state ||
-      devdata->lastslave != gdk_event_get_source_device ((GdkEvent *) ev))
-    select_tool (data, ev->device, gdk_event_get_source_device ((GdkEvent *) ev), ev->state);
+  select_tool (data, ev->device, gdk_event_get_source_device ((GdkEvent *) ev), ev->state);
 
   devdata->lastx = ev->x;
   devdata->lasty = ev->y;
@@ -317,9 +316,7 @@ gboolean on_motion (GtkWidget *win,
   if(data->debug)
       g_printerr("DEBUG: Device '%s': motion to (x,y)=(%.2f : %.2f)\n", gdk_device_get_name(ev->device), ev->x, ev->y);
 
-  if (ev->state != devdata->state ||
-      devdata->lastslave != gdk_event_get_source_device ((GdkEvent *) ev))
-    select_tool (data, ev->device, gdk_event_get_source_device ((GdkEvent *) ev), ev->state);
+  select_tool (data, ev->device, gdk_event_get_source_device ((GdkEvent *) ev), ev->state);
 
   gdk_device_get_history (ev->device, ev->window,
 			  devdata->motion_time, ev->time,
@@ -451,6 +448,18 @@ void on_mainapp_selection_get (GtkWidget          *widget,
                              GA_TOGGLEDATA, time);
       gtk_main(); /* Wait for the response */
     }
+  else if (action == GA_ACTIVATE)
+    {
+      gtk_selection_convert (data->win, GA_DATA,
+                             GA_ACTIVATEDATA, time);
+      gtk_main();
+    }
+  else if (action == GA_DEACTIVATE)
+    {
+      gtk_selection_convert (data->win, GA_DATA,
+                             GA_DEACTIVATEDATA, time);
+      gtk_main();
+    }
   else if (action == GA_VISIBILITY)
     toggle_visibility (data);
   else if (action == GA_CLEAR)
@@ -472,57 +481,67 @@ void on_mainapp_selection_get (GtkWidget          *widget,
                           8, (guchar*)uri, strlen (uri));
 }
 
-
-void on_mainapp_selection_received (GtkWidget *widget,
-				    GtkSelectionData *selection_data,
-				    guint time,
-				    gpointer user_data)
+void on_mainapp_selection_received(GtkWidget *widget,
+                                   GtkSelectionData *selection_data,
+                                   guint time,
+                                   gpointer user_data)
 {
-  GromitData *data = (GromitData *) user_data;
+  GdkAtom action;
+  GromitData *data = (GromitData *)user_data;
 
-  if(gtk_selection_data_get_length(selection_data) < 0)
-    {
-      if(data->debug)
-        g_printerr("DEBUG: mainapp got no answer back from client.\n");
-    }
+  if (gtk_selection_data_get_length(selection_data) < 0)
+  {
+    if (data->debug)
+      g_printerr("DEBUG: mainapp got no answer back from client.\n");
+  }
   else
+  {
+    action = gtk_selection_data_get_target(selection_data);
+    if (action == GA_TOGGLEDATA || action == GA_ACTIVATEDATA || action == GA_DEACTIVATEDATA)
     {
-      if(gtk_selection_data_get_target(selection_data) == GA_TOGGLEDATA )
+      intptr_t dev_nr = strtoull((gchar *)gtk_selection_data_get_data(selection_data), NULL, 10);
+
+      if (data->debug)
+        g_printerr("DEBUG: mainapp got toggle id '%ld' back from client.\n", (long)dev_nr);
+
+      if (dev_nr < 0) /* toggle all */
+        if (action == GA_TOGGLEDATA)
+          toggle_grab(data, NULL);
+        else if (action == GA_ACTIVATEDATA)
+          acquire_grab(data, NULL);
+        else if (action == GA_DEACTIVATEDATA)
+          release_grab(data, NULL);
+        else
         {
-	  intptr_t dev_nr = strtoull((gchar*)gtk_selection_data_get_data(selection_data), NULL, 10);
+          /* find dev numbered dev_nr */
+          GHashTableIter it;
+          gpointer value;
+          GromitDeviceData *devdata = NULL;
+          g_hash_table_iter_init(&it, data->devdatatable);
+          while (g_hash_table_iter_next(&it, NULL, &value))
+          {
+            devdata = value;
+            if (devdata->index == dev_nr)
+              break;
+            else
+              devdata = NULL;
+          }
 
-          if(data->debug)
-	    g_printerr("DEBUG: mainapp got toggle id '%ld' back from client.\n", (long)dev_nr);
-
-	  if(dev_nr < 0)
-	    toggle_grab(data, NULL); /* toggle all */
-	  else
-	    {
-	      /* find dev numbered dev_nr */
-	      GHashTableIter it;
-	      gpointer value;
-	      GromitDeviceData* devdata = NULL;
-	      g_hash_table_iter_init (&it, data->devdatatable);
-	      while (g_hash_table_iter_next (&it, NULL, &value))
-		{
-		  devdata = value;
-		  if(devdata->index == dev_nr)
-		    break;
-		  else
-		    devdata = NULL;
-		}
-
-	      if(devdata)
-		toggle_grab(data, devdata->device);
-	      else
-		g_printerr("ERROR: No device at index %ld.\n", (long)dev_nr);
-	    }
+          if (devdata)
+            if (action == GA_TOGGLEDATA)
+              toggle_grab(data, devdata->device);
+            else if (action == GA_ACTIVATEDATA)
+              acquire_grab(data, devdata->device);
+            else if (action == GA_DEACTIVATEDATA)
+              release_grab(data, devdata->device);
+            else
+              g_printerr("ERROR: No device at index %ld.\n", (long)dev_nr);
         }
     }
+  }
 
-  gtk_main_quit ();
+  gtk_main_quit();
 }
-
 
 void on_device_removed (GdkDeviceManager *device_manager,
 			GdkDevice        *device,

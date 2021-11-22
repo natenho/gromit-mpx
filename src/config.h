@@ -1,4 +1,4 @@
-/* 
+/*
  * Gromit-MPX -- a program for painting on the screen
  *
  * Gromit Copyright (C) 2000 Simon Budig <Simon.Budig@unix-ag.org>
@@ -47,6 +47,18 @@ int parse_args (int argc, char **argv, GromitData *data);
 #endif
 #ifndef DEFAULT_OPACITY
 #define DEFAULT_OPACITY 0.75
+#endif
+#ifndef DEFAULT_EXTRA_MODIFIERKEY
+#define DEFAULT_EXTRA_MODIFIERKEY "Tab"
+#endif
+#ifndef DEFAULT_EXTRA_UNDOKEY
+#define DEFAULT_EXTRA_UNDOKEY "z"
+#endif
+#ifndef DEFAULT_EXTRA_REDOKEY
+#define DEFAULT_EXTRA_REDOKEY "y"
+#endif
+#ifndef DEFAULT_COLOR_KEYS
+#define DEFAULT_COLOR_KEYS "k", "w", "r", "g", "b", "y"
 #endif
 
 void read_keyfile(GromitData *data);

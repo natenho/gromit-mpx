@@ -33,8 +33,6 @@
 #include "paint_cursor.xpm"
 #include "erase_cursor.xpm"
 
-
-
 GromitPaintContext *paint_context_new (GromitData *data,
 				       GromitPaintType type,
 				       GdkRGBA *paint_color,
@@ -255,6 +253,15 @@ void select_tool (GromitData *data,
   /* get the data for this device */
   GromitDeviceData *devdata = g_hash_table_lookup(data->devdatatable, device);
 
+  if (state == devdata->state &&
+      data->extra_modifier_state == devdata->extra_modifier_state &&
+      devdata->lastslave == slave_device)
+  {
+    if (data->debug)
+      g_printerr("DEBUG: select_tool skipped (same context)\n");
+    return;
+  }
+
   if (device)
     {
       slave_len = strlen (gdk_device_get_name(slave_device));
@@ -344,6 +351,47 @@ void select_tool (GromitData *data,
         }
       while (i < req_buttons);
 
+      // Extra modifier  //TODO remove code duplication
+      if (!req_modifier && data->extra_modifier_state)
+      {
+        buttons = 0;
+        modifier = 8;
+        slave_name[slave_len + 1] = buttons + 64;
+        slave_name[slave_len + 2] = modifier + 48;
+        name[len + 1] = buttons + 64;
+        name[len + 2] = modifier + 48;
+        default_name[default_len + 1] = buttons + 64;
+        default_name[default_len + 2] = modifier + 48;
+
+        if (data->debug)
+          g_printerr("DEBUG: extra modifier select_tool looking up context for '%s' attached to '%s'\n", slave_name, name);
+
+        context = g_hash_table_lookup(data->tool_config, slave_name);
+        if (context)
+        {
+          if (data->debug)
+            g_printerr("DEBUG: extra modifier select_tool set context for '%s'\n", slave_name);
+          devdata->cur_context = context;
+          success = 1;
+        }
+        else /* try master name */
+            if ((context = g_hash_table_lookup(data->tool_config, name)))
+        {
+          if (data->debug)
+            g_printerr("DEBUG: extra modifier select_tool set context for '%s'\n", name);
+          devdata->cur_context = context;
+          success = 1;
+        }
+        else /* try default_name */
+            if ((context = g_hash_table_lookup(data->tool_config, default_name)))
+        {
+          if (data->debug)
+            g_printerr("DEBUG: extra modifier select_tool set default context '%s' for '%s'\n", default_name, name);
+          devdata->cur_context = context;
+          success = 1;
+        }
+      }
+
       g_free (name);
       g_free (default_name);
 
@@ -385,6 +433,7 @@ void select_tool (GromitData *data,
 
   devdata->state = state;
   devdata->lastslave = slave_device;
+  devdata->extra_modifier_state = data->extra_modifier_state;
 }
 
 
@@ -491,29 +540,57 @@ void redo_drawing (GromitData *data)
  * Functions for handling various (GTK+)-Events
  */
 
-
-void main_do_event (GdkEventAny *event,
-		    GromitData  *data)
+void main_do_event(GdkEventAny *event,
+                   GromitData *data)
 {
-  guint keycode = ((GdkEventKey *) event)->hardware_keycode;
-  if ((event->type == GDK_KEY_PRESS ||
-       event->type == GDK_KEY_RELEASE) &&
-      event->window == data->root &&
-      (keycode == data->hot_keycode || keycode == data->undo_keycode))
+  guint keycode = ((GdkEventKey *)event)->hardware_keycode;
+  gboolean keycode_handled = FALSE;
+
+  if (event->type == GDK_KEY_PRESS)
+  {
+    keycode_handled = TRUE;
+
+    if (keycode == data->extra_modifier_keycode)
+      data->extra_modifier_state = TRUE;
+    else if (keycode == data->extra_undo_keycode && ((GdkEventKey *)event)->state & GDK_CONTROL_MASK)
+      undo_drawing(data);
+    else if (keycode == data->extra_redo_keycode && ((GdkEventKey *)event)->state & GDK_CONTROL_MASK)
+      redo_drawing(data);
+    else
+      keycode_handled = FALSE;
+
+    for (size_t i = 0; i < GROMIT_BASIC_COLOR_COUNT; i++)
     {
-      /* redirect the event to our main window, so that GTK+ doesn't
-       * throw it away (there is no GtkWidget for the root window...)
-       */
-      event->window = gtk_widget_get_window(data->win);
-      g_object_ref (gtk_widget_get_window(data->win));
+      if (keycode == data->switch_color_keycode[i])
+      {
+        data->switch_color = data->switch_colors[i];
+        keycode_handled = TRUE;
+        break;
+      }
     }
 
-  gtk_main_do_event ((GdkEvent *) event);
+  }
+  else if (event->type == GDK_KEY_RELEASE)
+  {
+    keycode_handled = TRUE;
+
+    if (keycode == data->extra_modifier_keycode)
+      data->extra_modifier_state = FALSE;
+    else
+      keycode_handled = FALSE;
+  }
+
+  if (keycode_handled && event->window == data->root)
+  {
+    /* redirect the event to our main window, so that GTK+ doesn't
+       * throw it away (there is no GtkWidget for the root window...)
+       */
+    event->window = gtk_widget_get_window(data->win);
+    g_object_ref(gtk_widget_get_window(data->win));
+  }
+
+  gtk_main_do_event((GdkEvent *)event);
 }
-
-
-
-
 
 void setup_main_app (GromitData *data, int argc, char ** argv)
 {
@@ -540,6 +617,15 @@ void setup_main_app (GromitData *data, int argc, char ** argv)
   data->undo_keyval = DEFAULT_UNDOKEY;
   data->undo_keycode = 0;
 
+  data->extra_modifier_keyval = DEFAULT_EXTRA_MODIFIERKEY;
+  data->extra_modifier_keycode = 0;
+
+  data->extra_undo_keyval = DEFAULT_EXTRA_UNDOKEY;
+  data->extra_undo_keycode = 0;
+
+  data->extra_redo_keyval = DEFAULT_EXTRA_REDOKEY;
+  data->extra_redo_keycode = 0;
+
   char *xdg_current_desktop = getenv("XDG_CURRENT_DESKTOP");
   if (xdg_current_desktop && strcmp(xdg_current_desktop, "XFCE") == 0) {
       /*
@@ -556,13 +642,28 @@ void setup_main_app (GromitData *data, int argc, char ** argv)
   g_free(data->white);
   g_free(data->black);
   g_free(data->red);
-  data->white = g_malloc (sizeof (GdkRGBA));
-  data->black = g_malloc (sizeof (GdkRGBA));
-  data->red   = g_malloc (sizeof (GdkRGBA));
+  g_free(data->green);
+  g_free(data->blue);
+  g_free(data->yellow);
+  data->white = g_malloc(sizeof(GdkRGBA));
+  data->black = g_malloc(sizeof(GdkRGBA));
+  data->red = g_malloc(sizeof(GdkRGBA));
+  data->green = g_malloc(sizeof(GdkRGBA));
+  data->blue = g_malloc(sizeof(GdkRGBA));
+  data->yellow = g_malloc(sizeof(GdkRGBA));
   gdk_rgba_parse(data->white, "#FFFFFF");
   gdk_rgba_parse(data->black, "#000000");
   gdk_rgba_parse(data->red, "#FF0000");
+  gdk_rgba_parse(data->green, "#00FF00");
+  gdk_rgba_parse(data->blue, "#0000FF");
+  gdk_rgba_parse(data->yellow, "#FFFF00");
 
+  data->switch_colors[GROMIT_COLOR_BLACK] = data->black;
+  data->switch_colors[GROMIT_COLOR_WHITE] = data->white;
+  data->switch_colors[GROMIT_COLOR_RED] = data->red;
+  data->switch_colors[GROMIT_COLOR_GREEN] = data->green;
+  data->switch_colors[GROMIT_COLOR_BLUE] = data->blue;
+  data->switch_colors[GROMIT_COLOR_YELLOW] = data->yellow;
 
   /*
      CURSORS
@@ -686,62 +787,18 @@ void setup_main_app (GromitData *data, int argc, char ** argv)
   // might have been in key file
   gtk_widget_set_opacity(data->win, data->opacity);
 
-  /*
-     FIND HOTKEY KEYCODE
-  */
-  if (data->hot_keyval)
-    {
-      GdkKeymap    *keymap;
-      GdkKeymapKey *keys;
-      gint          n_keys;
-      guint         keyval;
+  data->hot_keycode = find_keycode(data->display, data->hot_keyval);
+  data->undo_keycode = find_keycode(data->display, data->undo_keyval);
+  data->extra_modifier_keycode = find_keycode(data->display, data->extra_modifier_keyval);
+  data->extra_undo_keycode = find_keycode(data->display, data->extra_undo_keyval);
+  data->extra_redo_keycode = find_keycode(data->display, data->extra_redo_keyval);
 
-      if (strlen (data->hot_keyval) > 0 &&
-          strcasecmp (data->hot_keyval, "none") != 0)
-        {
-          keymap = gdk_keymap_get_for_display (data->display);
-          keyval = gdk_keyval_from_name (data->hot_keyval);
+  gchar *switch_color_keyval[GROMIT_BASIC_COLOR_COUNT] = { DEFAULT_COLOR_KEYS };
 
-          if (!keyval || !gdk_keymap_get_entries_for_keyval (keymap, keyval,
-                                                             &keys, &n_keys))
-            {
-              g_printerr ("cannot find the key \"%s\"\n", data->hot_keyval);
-              exit (1);
-            }
-
-          data->hot_keycode = keys[0].keycode;
-          g_free (keys);
-        }
-    }
-
-  /*
-     FIND UNDOKEY KEYCODE
-  */
-  if (data->undo_keyval)
-    {
-      GdkKeymap    *keymap;
-      GdkKeymapKey *keys;
-      gint          n_keys;
-      guint         keyval;
-
-      if (strlen (data->undo_keyval) > 0 &&
-          strcasecmp (data->undo_keyval, "none") != 0)
-        {
-          keymap = gdk_keymap_get_for_display (data->display);
-          keyval = gdk_keyval_from_name (data->undo_keyval);
-
-          if (!keyval || !gdk_keymap_get_entries_for_keyval (keymap, keyval,
-                                                             &keys, &n_keys))
-            {
-              g_printerr ("cannot find the key \"%s\"\n", data->undo_keyval);
-              exit (1);
-            }
-
-          data->undo_keycode = keys[0].keycode;
-          g_free (keys);
-        }
-    }
-
+  for (size_t i = 0; i < GROMIT_BASIC_COLOR_COUNT; i++)
+  {
+    data->switch_color_keycode[i] = find_keycode(data->display, switch_color_keyval[i]);
+  }
 
   /*
      INPUT DEVICES
@@ -970,6 +1027,30 @@ int main_client (int argc, char **argv, GromitData *data)
            else
              data->clientdata = "-1"; /* default to grab all */
          }
+       else if (strcmp (arg, "-a") == 0 ||
+           strcmp (arg, "--activate") == 0)
+         {
+           action = GA_ACTIVATE;
+           if (i+1 < argc && argv[i+1][0] != '-') /* there is an id supplied */ //TODO remove code duplication
+             {
+               data->clientdata  = argv[i+1];
+               ++i;
+             }
+           else
+             data->clientdata = "-1"; /* default to grab all */
+         }
+        else if (strcmp (arg, "-x") == 0 ||
+           strcmp (arg, "--deactivate") == 0)
+         {
+           action = GA_DEACTIVATE;
+           if (i+1 < argc && argv[i+1][0] != '-') /* there is an id supplied */
+             {
+               data->clientdata  = argv[i+1];
+               ++i;
+             }
+           else
+             data->clientdata = "-1"; /* default to grab all */
+         }
        else if (strcmp (arg, "-v") == 0 ||
                 strcmp (arg, "--visibility") == 0)
          {
@@ -1081,6 +1162,8 @@ int main (int argc, char **argv)
 
   gtk_selection_owner_set (data->win, GA_DATA, GDK_CURRENT_TIME);
   gtk_selection_add_target (data->win, GA_DATA, GA_TOGGLEDATA, 1007);
+  gtk_selection_add_target (data->win, GA_DATA, GA_ACTIVATEDATA, 1008);
+  gtk_selection_add_target (data->win, GA_DATA, GA_DEACTIVATEDATA, 1009);
 
 
 
@@ -1110,4 +1193,31 @@ void indicate_active(GromitData *data, gboolean YESNO)
 	app_indicator_set_icon(data->trayicon, "net.christianbeier.Gromit-MPX.active");
     else
 	app_indicator_set_icon(data->trayicon, "net.christianbeier.Gromit-MPX");
+}
+
+guint find_keycode(GdkDisplay *display, gchar *keyname)
+{
+  GdkKeymap    *keymap;
+  GdkKeymapKey *keys;
+  gint          n_keys;
+  guint         keyval;
+  guint         keycode;
+
+  if (!keyname || strlen (keyname) <= 0 || strcasecmp (keyname, "none") == 0)
+    return 0;
+
+  keymap = gdk_keymap_get_for_display (display);
+  keyval = gdk_keyval_from_name (keyname);
+
+  if (!keyval || !gdk_keymap_get_entries_for_keyval (keymap, keyval,
+                                                      &keys, &n_keys))
+    {
+      g_printerr ("cannot find the key \"%s\"\n", keyname);
+      exit (1);
+    }
+
+  keycode = keys[0].keycode;
+  g_free (keys);
+
+  return keycode;
 }

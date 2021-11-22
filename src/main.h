@@ -54,8 +54,10 @@
 #define GA_UNDO       gdk_atom_intern ("Gromit/undo", FALSE)
 #define GA_REDO       gdk_atom_intern ("Gromit/redo", FALSE)
 
-#define GA_DATA       gdk_atom_intern ("Gromit/data", FALSE)
-#define GA_TOGGLEDATA gdk_atom_intern ("Gromit/toggledata", FALSE)
+#define GA_DATA           gdk_atom_intern("Gromit/data", FALSE)
+#define GA_TOGGLEDATA     gdk_atom_intern("Gromit/toggledata", FALSE)
+#define GA_ACTIVATEDATA   gdk_atom_intern("Gromit/activatedata", FALSE)
+#define GA_DEACTIVATEDATA gdk_atom_intern("Gromit/deactivatedata", FALSE)
 
 #define GROMIT_MAX_UNDO 4
 
@@ -76,6 +78,17 @@ typedef enum
   GROMIT_ARROW_AT_END = 2,
   GROMIT_ARROW_AT_BOTH = GROMIT_ARROW_AT_START | GROMIT_ARROW_AT_END
 } GromitArrowPosition;
+
+typedef enum
+{
+  GROMIT_COLOR_BLACK,
+  GROMIT_COLOR_WHITE,
+  GROMIT_COLOR_RED,
+  GROMIT_COLOR_GREEN,
+  GROMIT_COLOR_BLUE,
+  GROMIT_COLOR_YELLOW,
+  GROMIT_BASIC_COLOR_COUNT
+} GromitPaintColor;
 
 typedef struct
 {
@@ -100,12 +113,12 @@ typedef struct
   GdkDevice*   device;
   guint        index;
   guint        state;
+  gboolean     extra_modifier_state;
   GromitPaintContext *cur_context;
   gboolean     is_grabbed;
   gboolean     was_grabbed;
   GdkDevice*   lastslave;
 } GromitDeviceData;
-
 
 typedef struct
 {
@@ -124,14 +137,29 @@ typedef struct
   guint        hot_keycode;
   gchar       *undo_keyval;
   guint        undo_keycode;
+  gboolean     extra_modifier_state;
+  gchar       *extra_modifier_keyval;
+  guint        extra_modifier_keycode;
+  gchar       *extra_undo_keyval;
+  guint        extra_undo_keycode;
+  gchar       *extra_redo_keyval;
+  guint        extra_redo_keycode;
+  gchar       *switch_color_keyval[GROMIT_BASIC_COLOR_COUNT];
+  guint        switch_color_keycode[GROMIT_BASIC_COLOR_COUNT];
   gdouble      opacity;
 
   GdkRGBA     *white;
   GdkRGBA     *black;
   GdkRGBA     *red;
+  GdkRGBA     *green;
+  GdkRGBA     *blue;
+  GdkRGBA     *yellow;
 
   GromitPaintContext *default_pen;
   GromitPaintContext *default_eraser;
+
+  GdkRGBA     *switch_color;
+  GdkRGBA     *switch_colors[GROMIT_BASIC_COLOR_COUNT];
 
   GHashTable  *tool_config;
 
@@ -184,5 +212,7 @@ GromitPaintContext *paint_context_new (GromitData *data, GromitPaintType type,
 void paint_context_free (GromitPaintContext *context);
 
 void indicate_active(GromitData *data, gboolean YESNO);
+
+guint find_keycode(GdkDisplay *display, gchar *keyname);
 
 #endif
