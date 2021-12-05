@@ -271,6 +271,7 @@ gboolean on_buttonpress (GtkWidget *win,
   case GROMIT_LINE:
   case GROMIT_ELLIPSE:
   case GROMIT_RECTANGLE:
+    if(data->motionbuffer) cairo_surface_destroy(data->motionbuffer);
     data->motionbuffer = cairo_image_surface_create (CAIRO_FORMAT_ARGB32, data->width, data->height);
     copy_surface (data->motionbuffer, data->backbuffer);
     break;
